@@ -4,7 +4,7 @@ from scholars import get_stats
 if __name__ == "__main__":
 
     # Update the spreadsheet
-    spreadsheets = ["Scholar Stats", "Scholar Stats Winston"]
+    spreadsheets = ["Scholar Stats"]
     for s in spreadsheets:
         get_stats(s)
 
