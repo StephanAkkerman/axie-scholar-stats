@@ -31,10 +31,12 @@ $ pip install <package>
 - Clone the repository
 - Get your authentication.json file following this [tutorial](https://docs.gspread.org/en/latest/oauth2.html#for-bots-using-service-account)
 - Add the authentication.json to root directory of this folder
+- Make a new spreadsheet called Scholar Stats
 - Setup the "Scholars" worksheet by adding these columns on the first row:
   - Name 	(name of the scholar)
   - Split 	(0.6 if the scholar receives 60%)
   - Address 	(your Ronin address for that account)
+  - See screenshots below for image
 - Run `$ python src/main.py`
 - See result
 
@@ -44,3 +46,11 @@ $ pip install <package>
   - Info 	(Get this by typing !encrypt <your private key> after setting up the discord bot)
 
 ## Screenshots
+This is how your "Scholars" worksheet should look like if you want the basic functioning:
+![Basic functioning](https://github.com/StephanAkkerman/Scholar_Stats/blob/main/img/simple.png)
+  
+This is how your "Scholars" worksheet should look like if you want to use the Discord bot as well:
+![Discord Bot inlcuded](https://github.com/StephanAkkerman/Scholar_Stats/blob/main/img/advanced.png)
+  
+After running this the code this is how your spreadsheet should look like:
+![Result](https://github.com/StephanAkkerman/Scholar_Stats/blob/main/img/complete.png)
