@@ -1,0 +1,6 @@
+gspread_dataframe==3.2.1
+gspread==4.0.1
+pandas==1.2.4
+python_binance==1.0.14
+requests==2.25.1
+binance==0.3
