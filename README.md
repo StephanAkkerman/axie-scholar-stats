@@ -32,15 +32,15 @@ $ pip install <package>
 - Get your authentication.json file following this [tutorial](https://docs.gspread.org/en/latest/oauth2.html#for-bots-using-service-account)
 - Add the authentication.json to root directory of this folder
 - Setup the "Scholars" worksheet by adding these columns on the first row:
- + Name 	(name of the scholar)
- + Split 	(0.6 if the scholar receives 60%)
- + Address 	(your Ronin address for that account)
+  - Name 	(name of the scholar)
+  - Split 	(0.6 if the scholar receives 60%)
+  - Address 	(your Ronin address for that account)
 - Run `$ python src/main.py`
 - See result
 
 ## Optional steps to combine this with our [Discord bot](https://github.com/StephanAkkerman/Axie_Manager_Bot)
 - Add these columns to the "Scholars" worksheet: 
- + Discord ID	(Discord ID of the scholar in your server, find this by right-click 'copy id')
- + Info 	(Get this by typing !encrypt <your private key> after setting up the discord bot)
+  - Discord ID	(Discord ID of the scholar in your server, find this by right-click 'copy id')
+  - Info 	(Get this by typing !encrypt <your private key> after setting up the discord bot)
 
 ## Screenshots
