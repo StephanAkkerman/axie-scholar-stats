@@ -26,9 +26,6 @@ def get_stats(spreadsheet_name):
     new_update = False
 
     today = datetime.datetime.today().strftime("%Y-%m-%d")
-    yesterday = (datetime.datetime.today() - datetime.timedelta(days=1)).strftime(
-        "%Y-%m-%d"
-    )
 
     # Add date to scholar_dict
     scholar_dict = {"Date": today}
@@ -52,12 +49,16 @@ def get_stats(spreadsheet_name):
         scholar_name = wallet_data.get("name")
 
         # Convert to datetime
-        updated_on = datetime.datetime.utcfromtimestamp(
-            wallet_data["cache_last_updated"] / 1000
-        ).strftime("%m-%d, %H:%M")
-        last_claim = datetime.datetime.utcfromtimestamp(
-            wallet_data["last_claim"]
-        ).strftime("%m-%d")
+        try:
+            updated_on = datetime.datetime.utcfromtimestamp(
+                wallet_data["cache_last_updated"] / 1000
+            ).strftime("%m-%d, %H:%M")
+            last_claim = datetime.datetime.utcfromtimestamp(
+                wallet_data["last_claim"]
+            ).strftime("%m-%d")
+        except Exception as e:
+            # Dont update scholar then
+            return
 
         # Get all the important info
         data = [
