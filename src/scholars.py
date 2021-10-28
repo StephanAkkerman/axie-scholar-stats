@@ -121,10 +121,10 @@ def get_stats(spreadsheet_name):
 
         # Set SLP difference to today
         slp_diff = df.loc[today]["In Game SLP"]
-
+        
         # Calculate difference between last row and today
         if day_diff > 0:
-            old_slp = existing.tail(1)["In Game SLP"]
+            old_slp = existing.tail(1)["In Game SLP"].tolist()[0]
 
             # Get average if there is a new date
             if old_slp < slp_diff:
