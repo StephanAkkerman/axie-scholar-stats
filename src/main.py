@@ -1,13 +1,22 @@
+import threading
+
 # Local files
 from scholars import get_stats
+
+def update():
+    
+    spreadsheet = "Scholars"
+    worksheet = "Scholars"
+    get_stats(spreadsheet, worksheet)
+    
+    # Do this every 4 hours (minimum)
+    threading.Timer(3600 * 4, update).start()
 
 if __name__ == "__main__":
 
     # Update the spreadsheet
-    spreadsheets = ["Scholar Stats"]
-    for s in spreadsheets:
-        get_stats(s)
-
+    update()  
+    
     # Every 14th of the month pay the scholars their part
 
     # After that clear all except the 'Scholars' worksheet, unless there was an error

@@ -2,7 +2,6 @@
 # > Standard library
 import requests
 import datetime
-import threading
 
 # 3rd party dependencies
 import pandas as pd
@@ -134,27 +133,20 @@ def get_stats(spreadsheet_name, worksheet_name):
         new_update[manager] = True
 
         # Add win data of today
-        # CURRENTLY DISABLED
-        #df = pd.concat([df, get_winrate(address)], axis=1)
+        df = pd.concat([df, get_winrate(address)], axis=1)
 
         # Calculate difference in days between last existing row and today
-        if not existing.empty:
-            last_date = datetime.datetime.strptime(
-                existing.tail(1).index.values[0], "%Y-%m-%d"
-            )
-            day_diff = (datetime.datetime.now() - last_date).days
-        else:
-            day_diff = 1        
+        last_date = datetime.datetime.strptime(
+            existing.tail(1).index.values[0], "%Y-%m-%d"
+        )
+        day_diff = (datetime.datetime.now() - last_date).days
 
         # Set SLP difference to today
         slp_diff = df.loc[today]["In Game SLP"]
         
         # Calculate difference between last row and today
         if day_diff > 0:
-            if not existing.empty:
-                old_slp = existing.tail(1)["In Game SLP"].tolist()[0]
-            else:
-                old_slp = 0
+            old_slp = existing.tail(1)["In Game SLP"].tolist()[0]
 
             # Get average if there is a new date
             if old_slp < slp_diff:
@@ -190,8 +182,7 @@ def get_stats(spreadsheet_name, worksheet_name):
                 datetime.datetime.strptime(today, "%Y-%m-%d")
                 - datetime.datetime.strptime(this_year + "-" + last_claim, "%Y-%m-%d")
             ).days
-            
-            average_slp = slp_diff / days_passed if days_passed != 0 else slp_diff
+            average_slp = slp_diff / days_passed
 
         # Use old data
         else:
@@ -224,10 +215,7 @@ def get_stats(spreadsheet_name, worksheet_name):
                 pd.DataFrame([scholar_dict[manager]]).set_index("Date"),
                 scholar_stats_sheet[manager],
             )
-
-    # Do this every 4 hours (minimum)
-    threading.Timer(3600 * 4, get_stats, args=[spreadsheet_name, worksheet_name]).start()
-
+            
 
 def get_scholars(spreadsheet_name, worksheet_name):
     """ Simple function to read the "Scholars" worksheet and return the dataframe """

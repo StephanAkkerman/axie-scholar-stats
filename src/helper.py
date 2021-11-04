@@ -1,6 +1,6 @@
 import gspread
 import gspread_dataframe as gd
-from binance.client import Client
+from binance import Client
 
 # Ready the Binance client, for SLP prices
 client = Client()
