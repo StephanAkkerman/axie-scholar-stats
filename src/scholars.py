@@ -133,7 +133,8 @@ def get_stats(spreadsheet_name, worksheet_name):
         new_update[manager] = True
 
         # Add win data of today
-        df = pd.concat([df, get_winrate(address)], axis=1)
+        # Disabled for now
+        #df = pd.concat([df, get_winrate(address)], axis=1)
 
         # Calculate difference in days between last existing row and today
         last_date = datetime.datetime.strptime(
