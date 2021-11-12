@@ -140,20 +140,19 @@ def get_stats(spreadsheet_name, worksheet_name):
         last_date = datetime.datetime.strptime(
             existing.tail(1).index.values[0], "%Y-%m-%d"
         )
-        day_diff = (datetime.datetime.now() - last_date).days
+        day_diff = 1 if (datetime.datetime.now() - last_date).days == 0 else (datetime.datetime.now() - last_date).days
 
         # Set SLP difference to today
         slp_diff = df.loc[today]["In Game SLP"]
         
         # Calculate difference between last row and today
-        if day_diff > 0:
-            old_slp = existing.tail(1)["In Game SLP"].tolist()[0]
+        old_slp = existing.tail(1)["In Game SLP"].tolist()[0]
 
-            # Get average if there is a new date
-            if old_slp < slp_diff:
-                slp_diff = (df.loc[today]["In Game SLP"] - old_slp) / day_diff
+        # Get average if there is a new date
+        if old_slp <= slp_diff:
+            slp_diff = (df.loc[today]["In Game SLP"] - old_slp) / day_diff
 
-            # Fill up dates that have nothing with slp_diff
+            # Fill up rows what empty "SLP TODAY" with slp_diff
             # NOT YET IMPLEMENTED
 
         # Update SLP today, cannot be negative
