@@ -18,5 +18,4 @@ if __name__ == "__main__":
     update()  
     
     # Every 14th of the month pay the scholars their part
-
-    # After that clear all except the 'Scholars' worksheet, unless there was an error
+    # Delete every worksheet in Scholar Stats unless last_claim is later than now

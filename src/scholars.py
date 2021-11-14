@@ -2,6 +2,7 @@
 # > Standard library
 import requests
 import datetime
+import json
 
 # 3rd party dependencies
 import pandas as pd
@@ -103,10 +104,20 @@ def get_stats(spreadsheet_name, worksheet_name):
 
         # Make a df and set today's date as index
         df = pd.DataFrame(data).set_index("Date")
+        
+        # Open the spreadsheet 
+        try: 
+            sheet = gc.open(scholar_stats_sheet[manager])
+            
+        # If the spreadsheet does not exist, create it in folder specified in authentication.json
+        except gspread.exceptions.SpreadsheetNotFound:
+            with open("authentication.json") as f:
+                data = json.load(f)
+            sheet = gc.create(scholar_stats_sheet[manager], data['folder_id'])
 
         # Open a specific worksheet, worksheet for every account
         try:
-            ws = gc.open(scholar_stats_sheet[manager]).worksheet(scholar_name)
+            ws = sheet.worksheet(scholar_name)
 
         # If it does not exist, make one
         except gspread.exceptions.WorksheetNotFound:
@@ -118,7 +129,7 @@ def get_stats(spreadsheet_name, worksheet_name):
         # Read the scholar split, using account address
         split = scholar_info.loc[scholar_info["Address"] == address]["Scholar Share"].tolist()[0]
 
-        # If last existing == same updated on do nothing
+        # If last existing == same updated on, do nothing
         if not existing.empty:
             if existing.tail(1)["Updated On"].tolist()[0] == updated_on:
                 print("No updates available for: " + scholar_name)
@@ -136,27 +147,14 @@ def get_stats(spreadsheet_name, worksheet_name):
         # Disabled for now
         #df = pd.concat([df, get_winrate(address)], axis=1)
 
-        # Calculate difference in days between last existing row and today
-        last_date = datetime.datetime.strptime(
-            existing.tail(1).index.values[0], "%Y-%m-%d"
-        )
-        day_diff = 1 if (datetime.datetime.now() - last_date).days == 0 else (datetime.datetime.now() - last_date).days
-
-        # Set SLP difference to today
-        slp_diff = df.loc[today]["In Game SLP"]
-        
-        # Calculate difference between last row and today
-        old_slp = existing.tail(1)["In Game SLP"].tolist()[0]
-
-        # Get average if there is a new date
-        if old_slp <= slp_diff:
-            slp_diff = (df.loc[today]["In Game SLP"] - old_slp) / day_diff
-
-            # Fill up rows what empty "SLP TODAY" with slp_diff
-            # NOT YET IMPLEMENTED
+        # Calculate the difference between today and yesterday:
+        if not existing.empty:            
+            slp_diff = df.loc[today]["In Game SLP"] - existing.tail(1)["In Game SLP"].tolist()[0]
+        else:
+            slp_diff = df.loc[today]["In Game SLP"]
 
         # Update SLP today, cannot be negative
-        df["SLP Today"] = slp_diff
+        df["SLP Today"] = 0 if slp_diff < 0 else slp_diff
 
         # Overwrite if the index of today exists
         if today in existing.index:
