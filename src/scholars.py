@@ -141,7 +141,7 @@ def get_stats(spreadsheet_name, worksheet_name):
             # combined["SLP Today"][combined["SLP Today"] < 0] = 0
 
             # Calculate average
-            combined["Daily Average"] = combined["SLP Today"].mean().round()
+            combined.loc[today, "Daily Average"] = combined["SLP Today"].mean().round()
 
             # Upload it to worksheet
             gd.set_with_dataframe(ws, combined, include_index=True)

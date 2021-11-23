@@ -11,7 +11,7 @@ def update():
     get_stats(spreadsheet, worksheet)
 
     # Do this every 4 hours (minimum)
-    # threading.Timer(3600 * 4, update).start()
+    threading.Timer(3600 * 4, update).start()
 
 
 if __name__ == "__main__":
