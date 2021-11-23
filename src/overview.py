@@ -7,7 +7,7 @@ from helper import ws_df, add_worksheet, gc, client
 
 
 def update_sheet(ws_name, df, spreadsheet_name):
-    """ Updates the specified worksheet, using the data of df """
+    """Updates the specified worksheet, using the data of df"""
 
     # Open the overview worksheet and make it a df
     try:
@@ -38,13 +38,12 @@ def update_sheet(ws_name, df, spreadsheet_name):
 
         # Upload it to worksheet
         gd.set_with_dataframe(ws, updated_overview, include_index=True)
-        print("Updated: " + ws_name)
 
 
 def update_overview(
     today, daily_slp, total_slp, total_scholar_share, total_average, spreadsheet_name
 ):
-    """ Updates the overview worksheet """
+    """Updates the overview worksheet"""
 
     # SLP price
     SLP = float(client.get_avg_price(symbol="SLPUSDT")["price"])

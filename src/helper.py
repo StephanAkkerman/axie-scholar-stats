@@ -10,7 +10,7 @@ gc = gspread.service_account(filename="authentication.json")
 
 
 def ws_df(ws):
-    """ Gets worksheet from Google Sheets and returns df"""
+    """Gets worksheet from Google Sheets and returns df"""
 
     # Get existing info of worksheet
     existing = gd.get_as_dataframe(ws)
@@ -26,7 +26,7 @@ def ws_df(ws):
 
 
 def add_worksheet(name, spreadsheet_name):
-    """ Adds a worksheet to spreadsheet """
+    """Adds a worksheet to spreadsheet"""
 
     ws = gc.open(spreadsheet_name).add_worksheet(title=name, rows="100", cols="20")
     return ws

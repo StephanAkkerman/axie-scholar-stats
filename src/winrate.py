@@ -4,7 +4,7 @@ import pandas as pd
 
 
 def get_winrate(address):
-    """ Gets the winrate of a scholar using the battlelog API """
+    """Gets the winrate of a scholar using the battlelog API"""
 
     try:
         response = requests.get(
@@ -53,7 +53,7 @@ def get_winrate(address):
 
 
 def get_wins(df, address):
-    """ Simple function to get wins """
+    """Simple function to get wins"""
 
     wins = 0
     for index, row in df.iterrows():

@@ -16,43 +16,17 @@ from overview import update_overview, update_sheet
 
 
 def get_stats(spreadsheet_name, worksheet_name):
-    """ 
+    """
     Reads the scholars from the Scholars spreadsheet
     Writes the scholars info in Scholar Stats + Manager name
     """
-    
-    print(f"Getting scholar stats at {datetime.datetime.now()}")
 
-    # Set locals
-    daily_slp = {}
-    total_slp = {}
-    total_scholar_share = {}
-    total_average = {}
-    new_update = {}
-    scholar_dict = {}
-    scholar_stats_sheet = {}
+    print(f"Getting scholar stats at {datetime.datetime.now()}")
 
     today = datetime.datetime.today().strftime("%Y-%m-%d")
 
     scholar_info = get_scholars(spreadsheet_name, worksheet_name)
-    managers = set(scholar_info['Manager'].tolist())
-
-    # Do this for every unique manager
-    for manager in managers:
-        
-        # Set default values for overview
-        new_update[manager] = False
-
-        daily_slp[manager] = 0
-        total_slp[manager] = 0
-        total_scholar_share[manager] = 0
-        total_average[manager] = 0
-        
-        # Add date to scholar_dict
-        scholar_dict[manager] = {"Date": today}
-        
-        # Get the spreadsheet name
-        scholar_stats_sheet[manager] = "Scholar Stats " + manager
+    managers = set(scholar_info["Manager"].tolist())
 
     # Get all addresses and join together as a string seperated by commas
     together = ",".join(scholar_info["Address"].tolist())
@@ -62,161 +36,153 @@ def get_stats(spreadsheet_name, worksheet_name):
         "https://game-api.axie.technology/api/v1/" + together
     ).json()
 
-    # Iterate over returned dict
-    for address, wallet_data in response.items():
-        # Address is the ronin address replaced with 0x
-        # wallet_data is dictionary that is returned from API
+    df = pd.DataFrame(response).transpose()
 
-        # Name is the name of the Ronin account
-        scholar_name = wallet_data.get("name")
-        
-        # Get manager name corresponding to this address
-        manager = scholar_info.loc[scholar_info['Address'] == address]['Manager'].tolist()[0]
+    # Reset index and rename old index as addresses
+    df = df.rename_axis("Address").reset_index()
 
-        # Convert to datetime
+    # Convert to datetime and string
+    df["cache_last_updated"] = pd.to_datetime(
+        df["cache_last_updated"], unit="ms"
+    ).dt.strftime("%m-%d, %H:%M")
+    df["last_claim"] = pd.to_datetime(df["last_claim"], unit="s").dt.strftime("%m-%d")
+    df["next_claim"] = pd.to_datetime(df["next_claim"], unit="s").dt.strftime("%m-%d")
+
+    df = df.rename(
+        columns={
+            "cache_last_updated": "Updated On",
+            "in_game_slp": "In Game SLP",
+            "ronin_slp": "Ronin SLP",
+            "total_slp": "Total SLP",
+            "rank": "Rank",
+            "mmr": "MMR",
+            "last_claim": "Last Claim",
+            "next_claim": "Next Claim",
+        }
+    )
+
+    # Add managers to df
+    df = pd.merge(
+        df, scholar_info[["Manager", "Address"]], left_index=False, right_index=False
+    )
+
+    # Add date
+    df["Date"] = today
+
+    for manager in managers:
+        # Set variables for overview
+        daily_slp = 0
+        total_slp = 0
+        total_scholar_share = 0
+
+        scholar_dict = {}
+        scholar_dict["Date"] = today
+
+        # Open the spreadsheet
         try:
-            updated_on = datetime.datetime.utcfromtimestamp(
-                wallet_data["cache_last_updated"] / 1000
-            ).strftime("%m-%d, %H:%M")
-            last_claim = datetime.datetime.utcfromtimestamp(
-                wallet_data["last_claim"]
-            ).strftime("%m-%d")
-        except Exception as e:
-            # Dont update scholar then
-            return
+            sheet = gc.open(f"Scholar Stats {manager}")
 
-        # Get all the important info
-        data = [
-            {
-                "Date": today,
-                "In Game SLP": wallet_data["in_game_slp"],
-                "Ronin SLP": wallet_data["ronin_slp"],
-                "Total SLP": wallet_data["total_slp"],
-                "Rank": wallet_data["rank"],
-                "MMR": wallet_data["mmr"],
-                "Last Claim": last_claim,
-                "Next Claim": datetime.datetime.utcfromtimestamp(
-                    wallet_data["next_claim"]
-                ).strftime("%m-%d"),
-                "Updated On": updated_on,
-            }
-        ]
-
-        # Make a df and set today's date as index
-        df = pd.DataFrame(data).set_index("Date")
-        
-        # Open the spreadsheet 
-        try: 
-            sheet = gc.open(scholar_stats_sheet[manager])
-            
         # If the spreadsheet does not exist, create it in folder specified in authentication.json
         except gspread.exceptions.SpreadsheetNotFound:
             with open("authentication.json") as f:
                 data = json.load(f)
-            sheet = gc.create(scholar_stats_sheet[manager], data['folder_id'])
+            sheet = gc.create(f"Scholar Stats {manager}", data["folder_id"])
 
-        # Open a specific worksheet, worksheet for every account
-        try:
-            ws = sheet.worksheet(scholar_name)
+        # Get scholars corresponding with this managers
+        scholar_names = df.loc[df["Manager"] == manager]["name"].tolist()
 
-        # If it does not exist, make one
-        except gspread.exceptions.WorksheetNotFound:
-            ws = add_worksheet(scholar_name, scholar_stats_sheet[manager])
+        # Update every scholar
+        for scholar_name in scholar_names:
 
-        # Get the existing worksheet as dataframe
-        existing = ws_df(ws)
+            # Get the row from the df
+            scholar_df = df.loc[df["name"] == scholar_name]
 
-        # Read the scholar split, using account address
-        split = scholar_info.loc[scholar_info["Address"] == address]["Scholar Share"].tolist()[0]
+            # Set local variables
+            address = scholar_df["Address"].tolist()[0]
+            updated_on = scholar_df["Updated On"].tolist()[0]
 
-        # If last existing == same updated on, do nothing
-        if not existing.empty:
-            if existing.tail(1)["Updated On"].tolist()[0] == updated_on:
-                print("No updates available for: " + scholar_name)
-                daily_slp[manager] += existing.tail(1)["SLP Today"].tolist()[0]
-                scholar_dict[manager][scholar_name] = existing.tail(1)["SLP Today"].tolist()[0]
-                total_slp[manager] += existing.tail(1)["Total SLP"].tolist()[0]
-                # Read their split %
-                total_scholar_share[manager] += existing.tail(1)["Total SLP"].tolist()[0] * split
-                total_average[manager] += existing["SLP Today"].mean() / len(scholar_info)
-                continue
+            # Remove clutter
+            scholar_df = scholar_df[
+                [
+                    "Date",
+                    "In Game SLP",
+                    "Ronin SLP",
+                    "Total SLP",
+                    "Rank",
+                    "MMR",
+                    "Last Claim",
+                    "Next Claim",
+                    "Updated On",
+                ]
+            ].set_index("Date")
 
-        new_update[manager] = True
+            # Open a specific worksheet, worksheet for every account
+            try:
+                ws = sheet.worksheet(scholar_name)
 
-        # Add win data of today
-        # Disabled for now
-        #df = pd.concat([df, get_winrate(address)], axis=1)
+            # If it does not exist, make one
+            except gspread.exceptions.WorksheetNotFound:
+                ws = add_worksheet(scholar_name, f"Scholar Stats {manager}")
 
-        # Calculate the difference between today and yesterday:
-        if not existing.empty:            
-            slp_diff = df.loc[today]["In Game SLP"] - existing.tail(1)["In Game SLP"].tolist()[0]
-        else:
-            slp_diff = df.loc[today]["In Game SLP"]
+            # Get the existing worksheet as dataframe
+            existing = ws_df(ws)
 
-        # Update SLP today, cannot be negative
-        df["SLP Today"] = 0 if slp_diff < 0 else slp_diff
+            # Add win data of today, disabled for now
+            # df = pd.concat([df, get_winrate(address)], axis=1)
 
-        # Overwrite if the index of today exists
-        if today in existing.index:
-            # Overwrite index of today
-            existing.loc[today] = df.loc[today]
-            combined = existing
+            # Combine the dataframes
+            combined = scholar_df.combine_first(existing)
 
-        # Append dataframe to it
-        else:
-            combined = existing.append(df)
+            # Do calculations
+            combined["SLP Today"] = combined["In Game SLP"].diff()
 
-        # Update locals, for overview
-        daily_slp[manager] += slp_diff
-        scholar_dict[manager][scholar_name] = slp_diff
-        total_slp[manager] += df.loc[today]["Total SLP"]
-        total_scholar_share[manager] += df.loc[today]["Total SLP"] * split
+            # SLP Today cannot be negative
+            combined.loc[combined["SLP Today"] < 0, "SLP Today"] = 0
+            # combined["SLP Today"][combined["SLP Today"] < 0] = 0
 
-        # Update "Daily Average" for today
-        if existing.empty:
-            # Calculate days passed since last claim, needs year for some reason
-            this_year = str(datetime.datetime.today().year)
-            days_passed = (
-                datetime.datetime.strptime(today, "%Y-%m-%d")
-                - datetime.datetime.strptime(this_year + "-" + last_claim, "%Y-%m-%d")
-            ).days
-            average_slp = slp_diff / days_passed
+            # Calculate average
+            combined["Daily Average"] = combined["SLP Today"].mean().round()
 
-        # Use old data
-        else:
-            # Calculate Average
-            average_slp = combined["SLP Today"].mean()
+            # Upload it to worksheet
+            gd.set_with_dataframe(ws, combined, include_index=True)
+            print("Updated: " + scholar_name)
 
-        combined.loc[today, "Daily Average"] = average_slp
+            # Update variables for Overview
+            gained = combined.tail(1)["SLP Today"].tolist()[0]
+            daily_slp += gained
 
-        # Add average for overview
-        total_average[manager] += average_slp / len(scholar_info)
+            new_slp = scholar_df["In Game SLP"].tolist()[0]
+            total_slp += new_slp
 
-        # Upload it to worksheet
-        gd.set_with_dataframe(ws, combined, include_index=True)
-        print("Updated: " + scholar_name)
+            # Read the scholar split, using account address
+            split = scholar_info.loc[scholar_info["Address"] == address][
+                "Scholar Share"
+            ].tolist()[0]
+            total_scholar_share += split * new_slp
 
-    # Do this for every unique manager
-    for manager in managers:
-        # Update the overview
-        if new_update[manager]:
-            update_overview(
-                today,
-                daily_slp[manager],
-                total_slp[manager],
-                total_scholar_share[manager],
-                total_average[manager],
-                scholar_stats_sheet[manager],
-            )
-            update_sheet(
-                "Scholar Overview",
-                pd.DataFrame([scholar_dict[manager]]).set_index("Date"),
-                scholar_stats_sheet[manager],
-            )
-            
+            # Save this in the dict
+            scholar_dict[scholar_name] = gained
+
+        # Update the overview of this manager
+        update_overview(
+            today,
+            daily_slp,
+            total_slp,
+            total_scholar_share,
+            daily_slp / len(scholar_names),
+            f"Scholar Stats {manager}",
+        )
+        # Scholar Overview shows everyone's daily SLP
+        update_sheet(
+            "Scholar Overview",
+            pd.DataFrame([scholar_dict]).set_index("Date"),
+            f"Scholar Stats {manager}",
+        )
+        print(f"Updated {manager}'s overview")
+
 
 def get_scholars(spreadsheet_name, worksheet_name):
-    """ Simple function to read the "Scholars" worksheet and return the dataframe """
+    """Simple function to read the "Scholars" worksheet and return the dataframe"""
 
     # Open the worksheet of the specified spreadsheet
     ws = gc.open(spreadsheet_name).worksheet(worksheet_name)
