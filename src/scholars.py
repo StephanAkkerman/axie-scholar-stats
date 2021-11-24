@@ -1,4 +1,6 @@
 # Imports
+import math
+
 # > Standard library
 import requests
 import datetime
@@ -140,15 +142,20 @@ def get_stats(spreadsheet_name, worksheet_name):
             combined.loc[combined["SLP Today"] < 0, "SLP Today"] = 0
             # combined["SLP Today"][combined["SLP Today"] < 0] = 0
 
+            # Catch NaN
+            gained = 0 if math.isnan(combined.tail(1)["SLP Today"].tolist()[0]) else combined.tail(1)["SLP Today"].tolist()[0]
+
             # Calculate average
-            combined.loc[today, "Daily Average"] = combined["SLP Today"].mean().round()
+            try:
+                combined.loc[today, "Daily Average"] = combined["SLP Today"].mean().round()
+            except AttributeError:
+                combined.loc[today, "Daily Average"] = gained
 
             # Upload it to worksheet
             gd.set_with_dataframe(ws, combined, include_index=True)
             print("Updated: " + scholar_name)
 
             # Update variables for Overview
-            gained = combined.tail(1)["SLP Today"].tolist()[0]
             daily_slp += gained
 
             new_slp = scholar_df["In Game SLP"].tolist()[0]
