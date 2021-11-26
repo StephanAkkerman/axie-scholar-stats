@@ -56,6 +56,7 @@ def get_stats(spreadsheet_name, worksheet_name):
             "in_game_slp": "In Game SLP",
             "ronin_slp": "Ronin SLP",
             "total_slp": "Total SLP",
+            "lifetime_slp": "Lifetime SLP",
             "rank": "Rank",
             "mmr": "MMR",
             "last_claim": "Last Claim",
@@ -75,6 +76,7 @@ def get_stats(spreadsheet_name, worksheet_name):
         # Set variables for overview
         daily_slp = 0
         total_slp = 0
+        total_lifetime = 0
         total_scholar_share = 0
 
         scholar_dict = {}
@@ -95,13 +97,14 @@ def get_stats(spreadsheet_name, worksheet_name):
 
         # Update every scholar
         for scholar_name in scholar_names:
+            
+            print(f"Updating {scholar_name}'s stats")
 
             # Get the row from the df
             scholar_df = df.loc[df["name"] == scholar_name]
 
             # Set local variables
             address = scholar_df["Address"].tolist()[0]
-            updated_on = scholar_df["Updated On"].tolist()[0]
 
             # Remove clutter
             scholar_df = scholar_df[
@@ -110,6 +113,7 @@ def get_stats(spreadsheet_name, worksheet_name):
                     "In Game SLP",
                     "Ronin SLP",
                     "Total SLP",
+                    "Lifetime SLP",
                     "Rank",
                     "MMR",
                     "Last Claim",
@@ -150,16 +154,20 @@ def get_stats(spreadsheet_name, worksheet_name):
                 combined.loc[today, "Daily Average"] = combined["SLP Today"].mean().round()
             except AttributeError:
                 combined.loc[today, "Daily Average"] = gained
+                
+            # Reorder columns
+            combined = combined[['SLP Today', 'Daily Average', 'In Game SLP', 'Ronin SLP', 'Total SLP', 'Lifetime SLP', 'MMR', 'Rank', 'Last Claim', 'Next Claim', 'Updated On']]
 
             # Upload it to worksheet
             gd.set_with_dataframe(ws, combined, include_index=True)
-            print("Updated: " + scholar_name)
 
             # Update variables for Overview
             daily_slp += gained
 
             new_slp = scholar_df["In Game SLP"].tolist()[0]
             total_slp += new_slp
+            
+            total_lifetime += scholar_df["Lifetime SLP"].tolist()[0]
 
             # Read the scholar split, using account address
             split = scholar_info.loc[scholar_info["Address"] == address][
@@ -175,6 +183,7 @@ def get_stats(spreadsheet_name, worksheet_name):
             today,
             daily_slp,
             total_slp,
+            total_lifetime,
             total_scholar_share,
             daily_slp / len(scholar_names),
             f"Scholar Stats {manager}",

@@ -41,7 +41,7 @@ def update_sheet(ws_name, df, spreadsheet_name):
 
 
 def update_overview(
-    today, daily_slp, total_slp, total_scholar_share, total_average, spreadsheet_name
+    today, daily_slp, total_slp, lifetime_slp, total_scholar_share, total_average, spreadsheet_name
 ):
     """Updates the overview worksheet"""
 
@@ -59,6 +59,8 @@ def update_overview(
             "Daily Average SLP": int(total_average),
             "Total SLP": total_slp,
             "Total $": round(total_slp * SLP, 2),
+            "Lifetime SLP": lifetime_slp,
+            "Lifetime SLP $": round(lifetime_slp * SLP, 2),
             "Manager Share SLP": total_manager_share,
             "Manager Share $": round(total_manager_share * SLP, 2),
             "Scholar Share SLP": total_scholar_share,
