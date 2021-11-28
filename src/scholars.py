@@ -104,7 +104,11 @@ def get_stats(spreadsheet_name, worksheet_name):
             scholar_df = df.loc[df["name"] == scholar_name]
 
             # Set local variables
-            address = scholar_df["Address"].tolist()[0]
+            try:
+                address = scholar_df["Address"].tolist()[0]
+            except Exception:
+                # Skip this scholar
+                continue
 
             # Remove clutter
             scholar_df = scholar_df[
