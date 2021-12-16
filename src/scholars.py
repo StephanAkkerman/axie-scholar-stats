@@ -34,9 +34,13 @@ def get_stats(spreadsheet_name, worksheet_name):
     together = ",".join(scholar_info["Address"].tolist())
 
     # Call all addresses at once and retreive json
-    response = requests.get(
-        "https://game-api.axie.technology/api/v1/" + together
-    ).json()
+    try:
+        response = requests.get(
+            "https://game-api.axie.technology/api/v1/" + together
+        ).json()
+    except Exception as e:
+        print(e)
+        return
 
     df = pd.DataFrame(response).transpose()
 
