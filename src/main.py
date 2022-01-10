@@ -6,7 +6,7 @@ from scholars import get_stats
 
 def update():
 
-    spreadsheet = "Scholars"
+    spreadsheet = "Scholar Stats"
     worksheet = "Scholars"
     get_stats(spreadsheet, worksheet)
 
@@ -19,5 +19,4 @@ if __name__ == "__main__":
     # Update the spreadsheet
     update()
 
-    # Every 14th of the month pay the scholars their part
     # Delete every worksheet in Scholar Stats unless last_claim is later than now
