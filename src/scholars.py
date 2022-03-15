@@ -28,6 +28,12 @@ def get_stats(spreadsheet_name, worksheet_name):
     today = datetime.datetime.today().strftime("%Y-%m-%d")
 
     scholar_info = get_scholars(spreadsheet_name, worksheet_name)
+    
+    if scholar_info.empty:
+        return
+    
+    scholar_info = scholar_info[scholar_info['Scholar Name'].notna()]
+        
     managers = set(scholar_info["Manager"].tolist())
 
     # Get all addresses and join together as a string seperated by commas
@@ -70,7 +76,7 @@ def get_stats(spreadsheet_name, worksheet_name):
 
     # Add managers to df
     df = pd.merge(
-        df, scholar_info[["Manager", "Address"]], left_index=False, right_index=False
+        df, scholar_info[["Scholar Name", "Manager", "Address"]], left_index=False, right_index=False
     )
 
     # Add date
@@ -97,7 +103,7 @@ def get_stats(spreadsheet_name, worksheet_name):
             sheet = gc.create(f"Scholar Stats {manager}", data["folder_id"])
 
         # Get scholars corresponding with this managers
-        scholar_names = df.loc[df["Manager"] == manager]["name"].tolist()
+        scholar_names = df.loc[df["Manager"] == manager]["Scholar Name"].tolist()
 
         # Update every scholar
         for scholar_name in scholar_names:
@@ -105,7 +111,7 @@ def get_stats(spreadsheet_name, worksheet_name):
             print(f"Updating {scholar_name}'s stats")
 
             # Get the row from the df
-            scholar_df = df.loc[df["name"] == scholar_name]
+            scholar_df = df.loc[df["Scholar Name"] == scholar_name]
 
             # Set local variables
             try:
@@ -209,12 +215,18 @@ def get_scholars(spreadsheet_name, worksheet_name):
     """Simple function to read the "Scholars" worksheet and return the dataframe"""
 
     # Open the worksheet of the specified spreadsheet
-    ws = gc.open(spreadsheet_name).worksheet(worksheet_name)
-    scholar_info = (
-        gd.get_as_dataframe(ws).dropna(axis=0, how="all").dropna(axis=1, how="all")
-    )
+    try:
+        ws = gc.open(spreadsheet_name).worksheet(worksheet_name)
+        scholar_info = (
+            gd.get_as_dataframe(ws).dropna(axis=0, how="all").dropna(axis=1, how="all")
+        )
 
-    # Replace ronin: with 0x for API
-    scholar_info["Address"] = scholar_info["Address"].str.replace("ronin:", "0x")
-
-    return scholar_info
+        # Replace ronin: with 0x for API
+        scholar_info["Address"] = scholar_info["Address"].str.replace("ronin:", "0x")
+        
+        return scholar_info
+        
+    except Exception as e:
+        print(f"Could not get_scholars({spreadsheet_name}, {worksheet_name})")
+        
+        return pd.DataFrame()
